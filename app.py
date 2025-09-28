@@ -1,8 +1,6 @@
-# app_sklearn_binary_real_time.py
 import streamlit as st
 import pandas as pd
 import joblib
-from sklearn.linear_model import LogisticRegression
 from sklearn.feature_extraction.text import HashingVectorizer
 from newsapi import NewsApiClient
 import re
@@ -25,7 +23,7 @@ def preprocess_text(text):
 # ---------- Streamlit page ----------
 st.set_page_config(page_title="Real-Time News Sentiment Dashboard", layout="wide")
 st.title("Real-Time News Sentiment Dashboard")
-st.markdown("Predicting positive/negative sentiment of live news headlines using a pre-trained model!")
+st.markdown("Predicting positive/negative sentiment of live news headlines using a pre-trained binary model!")
 
 # ---------- Sidebar ----------
 st.sidebar.title("Settings")
