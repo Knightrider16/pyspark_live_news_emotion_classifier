@@ -1,7 +1,7 @@
 # convert_spark_to_sklearn_binary.py
 import joblib
 from pyspark.ml.pipeline import PipelineModel
-from pyspark.ml.feature import Tokenizer, StopWordsRemover, HashingTF, IDF
+from pyspark.ml.feature import HashingTF, Tokenizer, StopWordsRemover
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 
@@ -18,8 +18,8 @@ svc_model = spark_model.stages[4]       # LinearSVC (binary)
 # ------------------ Save StopWords ------------------
 stopwords_list = stopwords_remover.getStopWords()
 
-# ------------------ Extract coefficients ------------------
-coefs = np.array(svc_model.coefficients).reshape(1, -1)  # shape (1, num_features)
+# ------------------ Extract weights from LinearSVC ------------------
+coefs = np.array(svc_model.coefficients).reshape(1, -1)
 intercept = np.array([svc_model.intercept])
 
 # ------------------ Create dummy LogisticRegression ------------------
@@ -27,9 +27,9 @@ intercept = np.array([svc_model.intercept])
 dummy_X = np.zeros((2, hashingTF.getNumFeatures()))
 dummy_y = np.array([0, 1])
 sk_model = LogisticRegression()
-sk_model.fit(dummy_X, dummy_y)  # Dummy fit
+sk_model.fit(dummy_X, dummy_y)
 
-# ------------------ Assign weights from Spark LinearSVC ------------------
+# ------------------ Assign coefficients ------------------
 sk_model.coef_ = coefs
 sk_model.intercept_ = intercept
 sk_model.classes_ = np.array([0, 1])
@@ -41,4 +41,4 @@ joblib.dump({
     "stopwords": stopwords_list
 }, "models/sk_model_full.pkl")
 
-print("✅ Spark binary model converted to scikit-learn!")
+print("✅ Spark binary model converted to scikit-learn with preprocessing!")
