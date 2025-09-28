@@ -1,4 +1,6 @@
-pyspark==3.5.0
 streamlit
-newsapi-python
 pandas
+scikit-learn
+plotly
+newsapi-python
+joblib
