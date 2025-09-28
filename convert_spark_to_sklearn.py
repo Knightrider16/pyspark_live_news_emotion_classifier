@@ -1,48 +1,44 @@
-# convert_spark_to_sklearn_full.py
+# convert_spark_to_sklearn_binary.py
 import joblib
 from pyspark.ml.pipeline import PipelineModel
-from pyspark.ml.feature import HashingTF, IDF, Tokenizer, StopWordsRemover
+from pyspark.ml.feature import Tokenizer, StopWordsRemover, HashingTF, IDF
 import numpy as np
 from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import LabelEncoder
 
-# Load Spark model
+# ------------------ Load Spark model ------------------
 spark_model = PipelineModel.load("models/spark_linear_svc_pipeline")
 
-# Extract stages
-tokenizer = spark_model.stages[1]       # Tokenizer
-stopwords_remover = spark_model.stages[2]  # StopWordsRemover
-hashingTF = spark_model.stages[3]       # HashingTF
-idf_model = spark_model.stages[4]       # IDF
-ovr_model = spark_model.stages[5]       # OneVsRest
-svc_models = ovr_model.models           # List of LinearSVCModel for each class
+# ------------------ Extract stages ------------------
+tokenizer = spark_model.stages[0]       # Tokenizer
+stopwords_remover = spark_model.stages[1]  # StopWordsRemover
+hashingTF = spark_model.stages[2]       # HashingTF
+idf_model = spark_model.stages[3]       # IDF
+svc_model = spark_model.stages[4]       # LinearSVC (binary)
 
-# Save StopWords
+# ------------------ Save StopWords ------------------
 stopwords_list = stopwords_remover.getStopWords()
 
-# Extract weights for multi-class LinearSVC
-coefs = []
-intercepts = []
-for svc in svc_models:
-    coefs.append(np.array(svc.coefficients))
-    intercepts.append(svc.intercept)
+# ------------------ Extract coefficients ------------------
+coefs = np.array(svc_model.coefficients).reshape(1, -1)  # shape (1, num_features)
+intercept = np.array([svc_model.intercept])
 
-# Create sklearn logistic regression model
-dummy_X = np.zeros((1, hashingTF.getNumFeatures()))
-dummy_y = np.zeros(1)
+# ------------------ Create dummy LogisticRegression ------------------
+# Needs at least 2 classes for sklearn
+dummy_X = np.zeros((2, hashingTF.getNumFeatures()))
+dummy_y = np.array([0, 1])
 sk_model = LogisticRegression()
 sk_model.fit(dummy_X, dummy_y)  # Dummy fit
 
-# Assign coefficients
-sk_model.coef_ = np.vstack(coefs)
-sk_model.intercept_ = np.array(intercepts)
-sk_model.classes_ = np.arange(len(coefs))
+# ------------------ Assign weights from Spark LinearSVC ------------------
+sk_model.coef_ = coefs
+sk_model.intercept_ = intercept
+sk_model.classes_ = np.array([0, 1])
 
-# Save everything needed for Python inference
+# ------------------ Save everything needed for Python inference ------------------
 joblib.dump({
     "model": sk_model,
     "num_features": hashingTF.getNumFeatures(),
     "stopwords": stopwords_list
 }, "models/sk_model_full.pkl")
 
-print("✅ Spark model converted to scikit-learn with preprocessing!")
+print("✅ Spark binary model converted to scikit-learn!")
