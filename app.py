@@ -7,6 +7,7 @@ from sklearn.feature_extraction.text import HashingVectorizer
 from newsapi import NewsApiClient
 import re
 import plotly.express as px
+from streamlit_autorefresh import st_autorefresh
 
 # ---------- Load scikit-learn model ----------
 data = joblib.load("models/sk_model_full.pkl")
@@ -34,7 +35,7 @@ page_size = st.sidebar.slider("Number of Headlines", 5, 20, 10)
 refresh_rate = st.sidebar.slider("Auto-refresh every (seconds)", 30, 300, 60)
 
 # ---------- Auto-refresh ----------
-st.set_query_params(refresh=int(refresh_rate))
+count = st_autorefresh(interval=refresh_rate*1000, limit=None, key="refresh")
 st.markdown(f'<meta http-equiv="refresh" content="{refresh_rate}">', unsafe_allow_html=True)
 
 # ---------- Fetch news ----------
