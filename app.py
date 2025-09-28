@@ -34,7 +34,7 @@ page_size = st.sidebar.slider("Number of Headlines", 5, 20, 10)
 refresh_rate = st.sidebar.slider("Auto-refresh every (seconds)", 30, 300, 60)
 
 # ---------- Auto-refresh ----------
-st.experimental_set_query_params(refresh=int(refresh_rate))
+st.set_query_params(refresh=int(refresh_rate))
 st.markdown(f'<meta http-equiv="refresh" content="{refresh_rate}">', unsafe_allow_html=True)
 
 # ---------- Fetch news ----------
