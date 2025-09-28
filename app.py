@@ -42,20 +42,28 @@ st.markdown(f'<meta http-equiv="refresh" content="{refresh_rate}">', unsafe_allo
 api_key = st.secrets["NEWSAPI_KEY"]
 newsapi = NewsApiClient(api_key=api_key)
 
+# ---------- Cached News Fetch Function ----------
 @st.cache_data(ttl=refresh_rate)
-def fetch_news():
-    try:
-        articles = newsapi.get_top_headlines(language='en', country=country, category=category, page_size=page_size)['articles']
-        headlines = [a['title'] for a in articles if a['title']]
-        return headlines
-    except Exception as e:
-        st.error(f"Error fetching news: {e}")
-        return []
+def fetch_news(country, category, page_size):
+    articles = newsapi.get_top_headlines(
+        language='en', country=country, category=category, page_size=page_size
+    ).get('articles', [])
+    headlines = [a['title'] for a in articles if a.get('title')]
+    return headlines
 
-headlines = fetch_news()
+# ---------- Sidebar Settings ----------
+st.sidebar.title("Settings")
+country = st.sidebar.selectbox("Select Country", ["us", "gb", "in", "ca", "au"])
+category = st.sidebar.selectbox("Category", ["business", "entertainment", "general", "health", "science", "sports", "technology"])
+page_size = st.sidebar.slider("Number of Headlines", 5, 20, 10)
+
+# ---------- Fetch Headlines ----------
+headlines = fetch_news(country, category, page_size)
+
 if not headlines:
     st.warning("No headlines found. Try changing settings.")
     st.stop()
+
 
 # ---------- Preprocess ----------
 processed_headlines = [preprocess_text(h) for h in headlines]
