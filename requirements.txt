@@ -1,7 +1,7 @@
-streamlit
+scikit-learn==1.3.2
+numpy
 pandas
-scikit-learn
 plotly
 newsapi-python
-joblib
+streamlit
 streamlit-autorefresh
